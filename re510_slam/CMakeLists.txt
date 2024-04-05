@@ -32,15 +32,6 @@ set(tool_source
     tool/tool.h
 )
 
-# MAPGEN
-set(rs_mapgen_source
-    rs_mapgen/src/mapgen.cpp
-    rs_mapgen/src/mapgen.h
-)
-
-add_executable(rs_mapgen rs_mapgen/rs_mapgen.cpp ${rs_mapgen_source} ${tool_source})
-target_link_libraries(rs_mapgen ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-
 # MCL
 set(rs_mcl_source
     rs_mcl/src/mcl.cpp

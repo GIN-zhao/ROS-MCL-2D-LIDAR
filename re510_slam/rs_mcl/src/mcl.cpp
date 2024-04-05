@@ -1,337 +1,292 @@
-#include "mcl.h"
+/* * @Author: zhaoyu  * @Date: 2024-04-05 16:33:58  * @Last Modified by:   zhaoyu  * @Last Modified time: 2024-04-05 19:33:58  */ #include "mcl.h"
 
 mcl::mcl()
 {
-  m_sync_count = 0;
-  gen.seed(rd()); // Set random seed for random engine
+    m_sync_cnt_ = 0;
+    gen_ = std::mt19937(rd_());
 
-  gridMap = cv::imread("/home/mywork/ROS-MCL-2D-LIDAR/gridmap.png", cv::IMREAD_GRAYSCALE);         // Original gridmap (For show)
-  gridMapCV = cv::imread("/home/mywork/ROS-MCL-2D-LIDAR/erodedGridmap.png", cv::IMREAD_GRAYSCALE); // grdiamp for use.
+    // initialize random number generator
+    gridMap_ = cv::imread("/home/mywork/ROS-MCL-2D-LIDAR/gridmap.png", cv::IMREAD_GRAYSCALE);
+    gridMapCV_ = cv::imread("/home/mywork/ROS-MCL-2D-LIDAR/erodedGridmap.png", cv::IMREAD_GRAYSCALE);
 
-  //--YOU CAN CHANGE THIS PARAMETERS BY YOURSELF--//
-  numOfParticle = 2500;       // Number of Particles.
-  minOdomDistance = 0.1;      // [m]
-  minOdomAngle = 30;          // [deg]
-  repropagateCountNeeded = 1; // [num]
-  odomCovariance[0] = 0.02;   // Rotation to Rotation
-  odomCovariance[1] = 0.02;   // Translation to Rotation
-  odomCovariance[2] = 0.02;   // Translation to Translation
-  odomCovariance[3] = 0.02;   // Rotation to Translation
-  odomCovariance[4] = 0.02;   // X
-  odomCovariance[5] = 0.02;   // Y
+    numParticles_ = 100;
 
-  //--DO NOT TOUCH THIS PARAMETERS--//
-  imageResolution = 0.05; // [m] per [pixel]
-  tf_laser2robot << -1, 0, 0, 0.2,
-      0, 1, 0, 0,
-      0, 0, -1, 0,
-      0, 0, 0, 1;            // TF (laser frame to robot frame)
-  mapCenterX = 0;            // [m]
-  mapCenterY = -2;           // [m]
-  isOdomInitialized = false; // Will be true when first data incoming.
-  predictionCounter = 0;
+    minOdomAngle_ = 30;
 
-  initializeParticles(); // Initialize particles.
-  showInMap();
+    minOdomDistance_ = 0.1;
+
+    repropagateCountNeeded_ = 1;
+
+    odomCovariance_[0] = 0.02;
+    odomCovariance_[1] = 0.02;
+    odomCovariance_[2] = 0.02;
+    odomCovariance_[3] = 0.02;
+    odomCovariance_[4] = 0.02;
+    odomCovariance_[5] = 0.02;
+
+    imageResolution_ = 0.05;
+
+    tf_laser2robot_ << -1, 0, 0, 0.2,
+        0, 1, 0, 0,
+        0, 0, -1, 0,
+        0, 0, 0, 1;
+
+    mapCenterX_ = 0;
+    mapCenterY_ = -2;
+
+    isOdomInitialized_ = false;
+
+    predictionCounter_ = 0;
+
+    initializeParticles();
+
+    showInMap();
 }
 
-mcl::~mcl()
-{
-}
+mcl::~mcl() {}
 
-/* INITIALIZE PARTICLES UNIFORMLY TO THE MAP
- */
 void mcl::initializeParticles()
 {
-  particles.clear();
-  std::uniform_real_distribution<float> x_pos(mapCenterX - gridMapCV.cols * imageResolution / 4.0,
-                                              mapCenterX + gridMapCV.cols * imageResolution / 4.0);
-  std::uniform_real_distribution<float> y_pos(mapCenterY - gridMapCV.rows * imageResolution / 4.0,
-                                              mapCenterY + gridMapCV.rows * imageResolution / 4.0); // heuristic setting. (to put particles into the map)
-  std::uniform_real_distribution<float> theta_pos(-M_PI, M_PI);                                     // -180 ~ 180 Deg
-  // SET PARTICLES BY RANDOM DISTRIBUTION
-  for (int i = 0; i < numOfParticle; i++)
-  {
-    particle particle_temp;
-    float randomX = x_pos(gen);
-    float randomY = y_pos(gen);
-    float randomTheta = theta_pos(gen);
-    particle_temp.pose = tool::xyzrpy2eigen(randomX, randomY, 0, 0, 0, randomTheta);
-    particle_temp.score = 1 / (double)numOfParticle;
-    particles.push_back(particle_temp);
-  }
-  showInMap();
+    particles_.clear();
+
+    std::uniform_real_distribution<float> x_pos(mapCenterX_ - gridMapCV_.cols * imageResolution_ / 4 / 0,
+                                                mapCenterX_ + gridMapCV_.cols * imageResolution_ / 4 / 0);
+
+    std::uniform_real_distribution<float> y_pos(mapCenterY_ - gridMapCV_.rows * imageResolution_ / 4 / 0,
+                                                mapCenterY_ + gridMapCV_.rows * imageResolution_ / 4 / 0);
+    std::uniform_real_distribution<float> theta_pos(-M_PI, M_PI);
+
+    for (int i = 0; i < numParticles_; i++)
+    {
+        Particle particle_; // create a new particle object
+
+        float randomX_ = x_pos(gen_);
+        float randomY_ = y_pos(gen_);
+        float randomTheta_ = theta_pos(gen_);
+
+        particle_.pose_ = tool::xyzrpy2eigen(randomX_, randomY_, 0, 0, 0, randomTheta_);
+        particle_.weight_ = 1.0 / numParticles_;
+
+        particles_.push_back(particle_);
+    }
+
+    showInMap();
 }
 
-void mcl::prediction(Eigen::Matrix4f diffPose)
+void mcl::showInMap()
 {
-  std::cout << "Predicting..." << m_sync_count << std::endl;
-  Eigen::VectorXf diff_xyzrpy = tool::eigen2xyzrpy(diffPose); // {x,y,z,roll,pitch,yaw} (z,roll,pitch assume to 0)
+    cv::Mat map_;
 
-  /* Your work.
-   * Input : diffPose,diff_xyzrpy (difference of odometry pose).
-   * To do : update(propagate) particle's pose.
-   */
+    cv::cvtColor(gridMapCV_, map_, cv::COLOR_GRAY2BGR);
 
-  //------------  FROM HERE   ------------------//
-  //// Using odometry model
-  double delta_trans = sqrt(pow(diff_xyzrpy(0), 2) + pow(diff_xyzrpy(1), 2));
-  double delta_rot1 = atan2(diff_xyzrpy(1), diff_xyzrpy(0));
-  double delta_rot2 = diff_xyzrpy(5) - delta_rot1;
+    for (int i = 0; i < numParticles_; i++)
+    {
+        int xPos_ = static_cast<int>((particles_.at(i).pose_(0, 3) - mapCenterX_ + (300.0 * imageResolution_) / 2) / imageResolution_);
+        int yPos_ = static_cast<int>((particles_.at(i).pose_(1, 3) - mapCenterY_ + (300.0 * imageResolution_) / 2) / imageResolution_);
 
-  std::default_random_engine generator;
-  if (delta_rot1 > M_PI)
-    delta_rot1 -= (2 * M_PI);
-  if (delta_rot1 < -M_PI)
-    delta_rot1 += (2 * M_PI);
-  if (delta_rot2 > M_PI)
-    delta_rot2 -= (2 * M_PI);
-  if (delta_rot2 < -M_PI)
-    delta_rot2 += (2 * M_PI);
-  //// Add noises to trans/rot1/rot2
-  double trans_noise_coeff = odomCovariance[2] * fabs(delta_trans) + odomCovariance[3] * fabs(delta_rot1 + delta_rot2);
-  double rot1_noise_coeff = odomCovariance[0] * fabs(delta_rot1) + odomCovariance[1] * fabs(delta_trans);
-  double rot2_noise_coeff = odomCovariance[0] * fabs(delta_rot2) + odomCovariance[1] * fabs(delta_trans);
+        cv::circle(map_, cv::Point(xPos_, yPos_), 1, cv::Scalar(255, 0, 0), -1);
+    }
 
-  float scoreSum = 0;
-  for (int i = 0; i < particles.size(); i++)
-  {
+    if (maxProbParicle_.weight_ > 0)
+    {
+        float x_all_ = 0;
+        float y_all_ = 0;
 
-    std::normal_distribution<double> gaussian_distribution(0, 1);
+        for (int i = 0; i < particles_.size(); i++)
+        {
 
-    delta_trans = delta_trans + gaussian_distribution(gen) * trans_noise_coeff;
-    delta_rot1 = delta_rot1 + gaussian_distribution(gen) * rot1_noise_coeff;
-    delta_rot2 = delta_rot2 + gaussian_distribution(gen) * rot2_noise_coeff;
+            x_all_ = x_all_ + particles_.at(i).pose_(0, 3) * particles_.at(i).weight_;
+            y_all_ = y_all_ + particles_.at(i).pose_(1, 3) * particles_.at(i).weight_;
+        }
 
-    double x = delta_trans * cos(delta_rot1) + gaussian_distribution(gen) * odomCovariance[4];
-    double y = delta_trans * sin(delta_rot1) + gaussian_distribution(gen) * odomCovariance[5];
-    double theta = delta_rot1 + delta_rot2 + gaussian_distribution(gen) * odomCovariance[0] * (M_PI / 180.0);
+        int xPos_ = static_cast<int>((x_all_ - mapCenterX_ + (300.0 * imageResolution_) / 2) / imageResolution_);
+        int yPos_ = static_cast<int>((y_all_ - mapCenterY_ + (300.0 * imageResolution_) / 2) / imageResolution_);
 
-    Eigen::Matrix4f diff_odom_w_noise = tool::xyzrpy2eigen(x, y, 0, 0, 0, theta);
+        cv::circle(map_, cv::Point(xPos_, yPos_), 1, cv::Scalar(0, 0, 255), -1);
 
-    Eigen::Matrix4f pose_t_plus_1 = particles.at(i).pose * diff_odom_w_noise;
+        Eigen::Matrix4f transLaser_ = maxProbParicle_.pose_ * tf_laser2robot_ * maxProbParicle_.laser_;
 
-    ////For debugging
-    //    Eigen::Matrix4f pose_t_plus_1 = particles.at(i).pose * diffPose;
-    scoreSum = scoreSum + particles.at(i).score; // For normalization
-    particles.at(i).pose = pose_t_plus_1;
-  }
+        for (int i = 0; i < transLaser_.cols(); ++i)
+        {
 
-  //------------  TO HERE   ------------------//
+            int xPos_ = static_cast<int>((transLaser_(0, i) - mapCenterX_ + (300.0 * imageResolution_) / 2) / imageResolution_);
+            int yPos_ = static_cast<int>((transLaser_(1, i) - mapCenterY_ + (300.0 * imageResolution_) / 2) / imageResolution_);
 
-  for (int i = 0; i < particles.size(); i++)
-  {
-    particles.at(i).score = particles.at(i).score / scoreSum; // normalize the score
-  }
+            cv::circle(map_, cv::Point(xPos_, yPos_), 1, cv::Scalar(0, 255, 255), -1);
+        }
+    }
 
-  showInMap();
+    cv::imshow("MCL", map_);
+
+    cv::waitKey(1);
 }
 
-void mcl::weightning(Eigen::Matrix4Xf laser)
+void mcl::prediction(Eigen::Matrix4f diffPose_)
 {
-  float maxScore = 0;
-  float scoreSum = 0;
+    std::cout << "Prediction: " << m_sync_cnt_ << std::endl;
 
-  /* Your work.
-   * Input : laser measurement data
-   * To do : update particle's weight(score)
-   */
+    Eigen::VectorXf diff_xyzrpy = tool::eigen2xyzrpy(diffPose_);
 
-  for (int i = 0; i < particles.size(); i++)
-  {
-    // Todo : Transform laser data into global frame to map matching
-    // Input : laser (4 x N matrix of laser points in lidar sensor's frame)
-    //         particles.at(i).pose (4 x 4 matrix of robot pose)
-    //         tf_laser2robot (4 x 4 matrix of transformatino between robot and sensor)
-    // Output : transLaser (4 x N matrix of laser points in global frame)
+    double delta_trans_ = sqrt(pow(diff_xyzrpy(0), 2) + pow(diff_xyzrpy(1), 2));
 
-    Eigen::Matrix4Xf transLaser = particles.at(i).pose * tf_laser2robot * laser; // now this is lidar sensor's frame.
+    double delta_rot1_ = atan2(diff_xyzrpy(1), diff_xyzrpy(0));
 
-    //--------------------------------------------------------//
+    double delta_rot2_ = diff_xyzrpy(5) - delta_rot1_;
 
-    float calcedWeight = 0;
+    std::default_random_engine generator_;
 
-    for (int j = 0; j < transLaser.cols(); j++)
+    if (delta_rot1_ > M_PI)
+        delta_rot1_ -= 2 * M_PI;
+    if (delta_rot1_ < -M_PI)
+        delta_rot1_ += 2 * M_PI;
+    if (delta_rot2_ > M_PI)
+        delta_rot2_ -= 2 * M_PI;
+    if (delta_rot2_ < -M_PI)
+        delta_rot2_ += 2 * M_PI;
+
+    double trans_noise_coeff_ = odomCovariance_[2] * fabs(delta_trans_) + odomCovariance_[3] * fabs(delta_rot1_ + delta_rot2_);
+
+    double rot1_noise_coeff_ = odomCovariance_[0] * fabs(delta_rot1_) + odomCovariance_[1] * fabs(delta_trans_);
+
+    double rot2_noise_coeff_ = odomCovariance_[0] * fabs(delta_rot2_) + odomCovariance_[1] * fabs(delta_trans_);
+
+    float weightSum = 0.f;
+
+    for (int i = 0; i < particles_.size(); i++)
     {
-      // TODO :  translate each laser point (in [m]) to pixel frame.  (transLaser(0,i) 's unit is [m]) (You will use it in MCL too! remember!)
-      // Input :  transLaser(0,j), transLaser(1,j)  (laser point's pose in global frame)
-      //          imageResolution
-      //          gridMap.rows , gridMap.cols (size of image)
-      //          mapCenterX, mapCenterY (center of map's position)
-      // Output : ptX, ptY (laser point's pixel position)
+        std::normal_distribution<double> gaussian_distribution_(0, 1);
 
-      int ptX = static_cast<int>((transLaser(0, j) - mapCenterX + (300.0 * imageResolution) / 2) / imageResolution);
-      int ptY = static_cast<int>((transLaser(1, j) - mapCenterY + (300.0 * imageResolution) / 2) / imageResolution);
+        delta_trans_ += gaussian_distribution_(gen_) * trans_noise_coeff_;
+        delta_rot1_ += gaussian_distribution_(gen_) * rot1_noise_coeff_;
+        delta_rot2_ += gaussian_distribution_(gen_) * rot2_noise_coeff_;
 
-      //----------------------------------------------------------------------------------------//
+        double x_ = delta_trans_ * std::cos(delta_rot1_) + gaussian_distribution_(gen_) * odomCovariance_[4];
 
-      if (ptX < 0 || ptX >= gridMapCV.cols || ptY < 0 || ptY >= gridMapCV.rows)
-        continue; // dismiss if the laser point is at the outside of the map.
-      else
-      {
-        double img_val = gridMapCV.at<uchar>(ptY, ptX) / (double)255; // calculate the score.
-        calcedWeight += img_val;                                      // sum up the score.
-      }
+        double y_ = delta_trans_ * std::sin(delta_rot1_) + gaussian_distribution_(gen_) * odomCovariance_[5];
+
+        double theta_ = delta_rot1_ + delta_rot2_ + gaussian_distribution_(gen_) * odomCovariance_[0] * (M_PI / 180.f);
+
+        Eigen::Matrix4f diff_odom_w_noise_ = tool::xyzrpy2eigen(x_, y_, 0, 0, 0, theta_);
+
+        weightSum += particles_[i].weight_;
+
+        particles_[i].pose_ = particles_[i].pose_ * diff_odom_w_noise_;
     }
-    particles.at(i).score = particles.at(i).score + (calcedWeight / transLaser.cols()); // Adding score to particle.
-    scoreSum += particles.at(i).score;
-    if (maxScore < particles.at(i).score) // To check which particle has max score
+
+    for (int i = 0; i < particles_.size(); i++)
     {
-      maxProbParticle = particles.at(i);
-      maxProbParticle.scan = laser;
-      maxScore = particles.at(i).score;
+        particles_[i].weight_ = particles_[i].weight_ / weightSum;
     }
-  }
-  for (int i = 0; i < particles.size(); i++)
-  {
-    particles.at(i).score = particles.at(i).score / scoreSum; // normalize the score
-  }
+    showInMap();
+}
+
+void mcl::correction(Eigen::Matrix4f laser_)
+{
+    float maxWeight_ = 0.f;
+    float WeightSum_ = 0.f;
+
+    for (int i = 0; i < particles_.size(); i++)
+    {
+        Eigen::Matrix4Xf transLaser_ = particles_[i].pose_ * tf_laser2robot_ * laser_;
+
+        float calcedWeight = 0.f;
+
+        for (int j = 0; j < transLaser_.cols(); j++)
+        {
+            int ptX_ = static_cast<int>((transLaser_(0, j) - mapCenterX_ + (300.0 * imageResolution_) / 2) / imageResolution_);
+            int ptY_ = static_cast<int>((transLaser_(1, j) - mapCenterY_ + (300.0 * imageResolution_) / 2) / imageResolution_);
+
+            if (ptX_ < 0 || ptX_ >= gridMapCV_.cols || ptY_ < 0 || ptY_ >= gridMapCV_.rows)
+                continue;
+
+            double img_val = gridMapCV_.at<uchar>(ptY_, ptX_) / 255.0;
+            calcedWeight += img_val;
+        }
+
+        particles_[i].weight_ = calcedWeight / transLaser_.cols() + particles_.at(i).weight_;
+
+        WeightSum_ += particles_[i].weight_;
+
+        if (particles_[i].weight_ > maxWeight_)
+        {
+            // maxWeight_ = particles_[i].weight_;
+            maxProbParicle_ = particles_[i];
+            maxProbParicle_.laser_ = laser_;
+
+            maxWeight_ = particles_[i].weight_;
+        }
+    }
+
+    for (int i = 0; i < particles_.size(); i++)
+    {
+        particles_[i].weight_ = particles_[i].weight_ / WeightSum_;
+    }
 }
 
 void mcl::resampling()
 {
-  std::cout << "Resampling..." << m_sync_count << std::endl;
+    std::cout << "Resampling:..." << this->m_sync_cnt_ << std::endl;
 
-  // Make score line (roullette)
-  std::vector<double> particleScores;
-  std::vector<particle> particleSampled;
-  double scoreBaseline = 0;
-  for (int i = 0; i < particles.size(); i++)
-  {
-    scoreBaseline += particles.at(i).score;
-    particleScores.push_back(scoreBaseline);
-  }
+    std::vector<double> particleWeights_;
+    std::vector<Particle> particleSampled_;
 
-  std::uniform_real_distribution<double> dart(0, scoreBaseline);
-  for (int i = 0; i < particles.size(); i++)
-  {
-    double darted = dart(gen); // darted number. (0 to maximum scores)
-    auto lowerBound = std::lower_bound(particleScores.begin(), particleScores.end(), darted);
-    int particleIndex = lowerBound - particleScores.begin(); // Index of particle in particles.
+    double WeightBaseLine_ = 0.f;
 
-    // TODO : put selected particle to array 'particleSampled' with score reset.
+    for (int i = 0; i < particles_.size(); i++)
+    {
+        WeightBaseLine_ += particles_[i].weight_;
+        particleWeights_.push_back(WeightBaseLine_);
+    }
 
-    particle selectedParticle = particles.at(particleIndex); // Which one you have to select?
+    std::uniform_real_distribution<float> uniform_distribution_(0, WeightBaseLine_);
 
-    particleSampled.push_back(selectedParticle);
+    for (int i = 0; i < particles_.size(); i++)
+    {
+        double darted = uniform_distribution_(gen_);
 
-    //-----------------------------------------------------------------------//
-  }
-  particles = particleSampled;
+        auto lowerBound = std::lower_bound(particleWeights_.begin(), particleWeights_.end(), darted);
+
+        particleSampled_.push_back(particles_[lowerBound - particleWeights_.begin()]);
+    }
+
+    particles_ = particleSampled_;
 }
 
-// DRAWING FUNCTION.
-void mcl::showInMap()
+void mcl::update(Eigen::Matrix4f pose_, Eigen::Matrix4f laser_)
 {
-  //  cv::Mat showMap(gridMap.cols, gridMap.rows, CV_8UC3);
-  cv::Mat showMap;
-  cv::cvtColor(gridMap, showMap, cv::COLOR_GRAY2BGR);
+    std::cout << "Update:..." << this->m_sync_cnt_ << std::endl;
 
-  for (int i = 0; i < numOfParticle; i++)
-  {
-    // Todo : Convert robot pose in image frame
-    // Input :  particles[i].pose(0,3), particles[i].pose(1,3) (x,y position in [m])
-    //          imageResolution
-    //          gridMap.rows , gridMap.cols (size of image)
-    //          mapCenterX, mapCenterY (center of map's position)
-    // Output : xPos, yPos (pose in pixel value)
-
-    int xPos = static_cast<int>((particles.at(i).pose(0, 3) - mapCenterX + (300.0 * imageResolution) / 2) / imageResolution);
-    int yPos = static_cast<int>((particles.at(i).pose(1, 3) - mapCenterY + (300.0 * imageResolution) / 2) / imageResolution);
-
-    //---------------------------------------------//
-    cv::circle(showMap, cv::Point(xPos, yPos), 1, cv::Scalar(255, 0, 0), -1);
-  }
-  if (maxProbParticle.score > 0)
-  {
-    // Todo : Convert robot pose in image frame
-    // Input :  maxProbParticle.pose(0,3), maxProbParticle.pose(1,3) (x,y position in [m])
-    //          imageResolution
-    //          gridMap.rows , gridMap.cols (size of image)
-    //          mapCenterX, mapCenterY (center of map's position)
-    // Output : xPos, yPos (pose in pixel value)
-
-    //// Original
-    //    int xPos = static_cast<int>((maxProbParticle.pose(0, 3) - mapCenterX + (300.0*imageResolution)/2)/imageResolution);
-    //    int yPos = static_cast<int>((maxProbParticle.pose(1, 3) - mapCenterY + (300.0*imageResolution)/2)/imageResolution);
-
-    //// Estimate position using all particles
-    float x_all = 0;
-    float y_all = 0;
-    for (int i = 0; i < particles.size(); i++)
+    if (!this->isOdomInitialized_)
     {
-      x_all = x_all + particles.at(i).pose(0, 3) * particles.at(i).score;
-      y_all = y_all + particles.at(i).pose(1, 3) * particles.at(i).score;
-    }
-    int xPos = static_cast<int>((x_all - mapCenterX + (300.0 * imageResolution) / 2) / imageResolution);
-    int yPos = static_cast<int>((y_all - mapCenterY + (300.0 * imageResolution) / 2) / imageResolution);
-
-    //---------------------------------------------//
-
-    cv::circle(showMap, cv::Point(xPos, yPos), 2, cv::Scalar(0, 0, 255), -1);
-
-    // Todo : Transform laser data into global frame to map matching
-    // Input : maxProbParticle.scan (4 x N matrix of laser points in lidar sensor's frame)
-    //         maxProbParticle.posee (4 x 4 matrix of robot pose)
-    //         tf_laser2robot (4 x 4 matrix of transformatino between robot and sensor)
-    // Output : transLaser (4 x N matrix of laser points in global frame)
-
-    Eigen::Matrix4Xf transLaser = maxProbParticle.pose * tf_laser2robot * maxProbParticle.scan;
-
-    //--------------------------------------------------------//
-
-    for (int i = 0; i < transLaser.cols(); i++)
-    {
-      // TODO :  translate each laser point (in [m]) to pixel frame.  (transLaser(0,i) 's unit is [m]) (You will use it in MCL too! remember!)
-      // Input :  transLaser(0,i), transLaser(1,i)  (laser point's pose in global frame)
-      //          imageResolution
-      //          gridMap.rows , gridMap.cols (size of image)
-      //          mapCenterX, mapCenterY (center of map's position)
-      // Output : xPos, yPos (laser point's pixel position)
-
-      int xPos = static_cast<int>((transLaser(0, i) - mapCenterX + (300.0 * imageResolution) / 2) / imageResolution);
-      int yPos = static_cast<int>((transLaser(1, i) - mapCenterY + (300.0 * imageResolution) / 2) / imageResolution);
-
-      //--------------------------------------------------------//
-
-      cv::circle(showMap, cv::Point(xPos, yPos), 1, cv::Scalar(0, 255, 255), -1);
-    }
-  }
-  cv::imshow("MCL2", showMap);
-  cv::waitKey(1);
-}
-
-void mcl::updateData(Eigen::Matrix4f pose, Eigen::Matrix4Xf laser)
-{
-  if (!isOdomInitialized)
-  {
-    odomBefore = pose; // Odom used at last prediction.
-    isOdomInitialized = true;
-  }
-  // When difference of odom from last correction is over some threshold, Doing correction.
-
-  // Calculate difference of distance and angle.
-
-  Eigen::Matrix4f diffOdom = odomBefore.inverse() * pose;    // odom after = odom New * diffOdom
-  Eigen::VectorXf diffxyzrpy = tool::eigen2xyzrpy(diffOdom); // {x,y,z,roll,pitch,yaw}
-  float diffDistance = sqrt(pow(diffxyzrpy[0], 2) + pow(diffxyzrpy[1], 2));
-  float diffAngle = fabs(diffxyzrpy[5]) * 180.0 / 3.141592;
-
-  if (diffDistance > minOdomDistance || diffAngle > minOdomAngle)
-  {
-    // Doing correction & prediction
-    prediction(diffOdom);
-
-    weightning(laser);
-
-    predictionCounter++;
-    if (predictionCounter == repropagateCountNeeded)
-    {
-      resampling();
-      predictionCounter = 0;
+        odomBefore_ = pose_;
+        isOdomInitialized_ = true;
     }
 
-    m_sync_count = m_sync_count + 1;
-    odomBefore = pose;
-  }
+    Eigen::Matrix4f diff_odom_ = odomBefore_.inverse() * pose_;
+
+    Eigen::VectorXf diffxyzrpy_ = tool::eigen2xyzrpy(diff_odom_);
+
+    float diffDistance_ = std::sqrt(pow(diffxyzrpy_[0], 2) + pow(diffxyzrpy_[1], 2));
+
+    float diffAngle_ = fabs(diffxyzrpy_[5]) * 180.0 / M_PI;
+
+    if (diffDistance_ < minOdomDistance_ || diffAngle_ > minOdomAngle_)
+    {
+
+        prediction(diff_odom_);
+
+        correction(laser_);
+
+        predictionCounter_++;
+
+        if (predictionCounter_ == repropagateCountNeeded_)
+        {
+            resampling();
+            predictionCounter_ = 0;
+        }
+
+        m_sync_cnt_ += 1;
+
+        odomBefore_ = pose_;
+    }
 }
