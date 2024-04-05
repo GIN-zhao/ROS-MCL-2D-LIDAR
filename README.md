@@ -2,17 +2,6 @@
 
 ---
 
-## Explanation
-
-### Easy-implemented Monte Carlo Localization (MCL) code on ros-kinetic
-
-These codes are implemented only using OpenCV library! So It might be helpful for newbies to understand overall MCL procedures
-
-Originally, it is RE510 materials at KAIST implemented by Seungwon Song as a TA.
-
-Original author: Seungwon Song (sswan55@kaist.ac.kr) <br>
-Reviser : Hyungtae Lim (shapelim@kaist.ac.kr)  
-
 ### Dependency libraries
 
 * Eigen (default version of ROS)
@@ -36,7 +25,7 @@ Reviser : Hyungtae Lim (shapelim@kaist.ac.kr)
 0. Setting
     1. Download this repository 
     <pre><code>$ cd /home/$usr_name/catkin_ws/src</code></pre>
-    <pre><code>$ git clone https://github.com/LimHyungTae/mcl_2d_lidar_ros.git</code></pre>
+    <pre><code>$ git clone https://github.com/GIN-zhao/ROS-MCL-2D-LIDAR.git</code></pre>
     2. Build this ros code as follows.
     <pre><code>$ cd /home/$usr_name/catkin_ws</code></pre>
     <pre><code>$ catkin_make re510_slam</code></pre>
