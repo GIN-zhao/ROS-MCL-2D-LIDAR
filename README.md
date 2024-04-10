@@ -33,21 +33,9 @@
     Or if you use catkin-tools, then type below line on the command
     <pre><code>$ catkin build re510_slam</code></pre>
 
-1. Mapgen
 
-    1. Move to the repository e.g,
-  
-    <pre><code>$ cd /home/$usr_name/catkin_ws/src/mcl_2d_lidar_ros</code></pre>
 
-    2. Play rosbag **re510_mapgen.bag**
-
-    <pre><code>$ rosbag play rosbag/re510_mapgen.bag -r 3</code></pre>
-
-    3. Run mapgen code
-
-    <pre><code>$ rosrun re510_slam rs_mapgen</code></pre>
-
-2. MCL
+ MCL
 
     1. Move to the repository e.g,
   

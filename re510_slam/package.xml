@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package>
-  <name>re510_slam</name>
+  <name>hw_slam2</name>
   <version>0.0.0</version>
-  <description>The re510_slam package</description>
+  <description>The hw_slam2 package</description>
 
-  <maintainer email="sswan55@kaist.ac.kr">Seungwon Song</maintainer>
+  <maintainer email="zhaoyu2023@shanghaitech.edu.cn">zhaoyu2023</maintainer>
 
   <license>BSD</license>
 

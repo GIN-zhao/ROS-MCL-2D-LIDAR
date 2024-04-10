@@ -19,7 +19,7 @@ class mcl
 {
   struct Particle
   {
-    Eigen::Matrix4Xf pose_;
+    Eigen::Matrix4f pose_;
     float weight_;
     Eigen::Matrix4Xf laser_;
   };
@@ -63,13 +63,13 @@ public:
   void initializeParticles();
 
   void prediction(Eigen::Matrix4f diffPose_); // predict with odometry
-  void correction(Eigen::Matrix4f laser_);    // correcting the weights;
+  void correction(Eigen::Matrix4Xf laser_);   // correcting the weights;
 
   void setOdom(nav_msgs::Odometry odom);
   void setLaser(sensor_msgs::LaserScan laser);
 
   void resampling(); // resample with systematic resampling method
 
-  void update(Eigen::Matrix4f pose_, Eigen::Matrix4f laser_);
+  void update(Eigen::Matrix4f pose_, Eigen::Matrix4Xf laser_);
   void showInMap();
 };

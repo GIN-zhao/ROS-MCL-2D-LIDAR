@@ -9,7 +9,50 @@ std::vector<Eigen::Matrix4Xf> vec_lasers_;
 std::vector<double> vec_lasers_time_;
 
 mcl mclsitmulator_;
+void checkData()
+{
 
+  if (vec_poses_.size() == 0 || vec_lasers_.size() == 0)
+  {
+    ROS_WARN("Data is not ready");
+  }
+
+  while (vec_poses_.size() != 0 && vec_lasers_.size() != 0)
+  {
+    if (fabs(vec_poses_time_[0] - vec_lasers_time_[0]) > 0.1)
+    {
+
+      if (vec_poses_time_[0] < vec_lasers_time_[0])
+      {
+        vec_poses_.erase(vec_poses_.begin());
+        vec_poses_time_.erase(vec_poses_time_.begin());
+      }
+      else
+      {
+        vec_lasers_.erase(vec_lasers_.begin());
+        vec_lasers_time_.erase(vec_lasers_time_.begin());
+      }
+    }
+    else
+    {
+
+      try
+      {
+
+        mclsitmulator_.update(vec_poses_[0], vec_lasers_[0]);
+
+        vec_poses_.erase(vec_poses_.begin());
+        vec_poses_time_.erase(vec_poses_time_.begin());
+        vec_lasers_.erase(vec_lasers_.begin());
+        vec_lasers_time_.erase(vec_lasers_time_.begin());
+      }
+      catch (const std::exception &e)
+      {
+        ROS_ERROR(e.what());
+      }
+    }
+  }
+}
 void callbackPose(const nav_msgs::Odometry::ConstPtr &msg)
 {
 
@@ -28,7 +71,6 @@ void callbackPose(const nav_msgs::Odometry::ConstPtr &msg)
   vec_poses_time_.push_back(msg->header.stamp.toSec());
 
   ROS_INFO("pose: %f", msg->header.stamp.toSec());
-
   checkData();
 }
 void callackLaser(const sensor_msgs::LaserScan::ConstPtr &msg)
@@ -44,11 +86,22 @@ void callackLaser(const sensor_msgs::LaserScan::ConstPtr &msg)
 
     if (dist_ > 1 && dist_ < 10)
     {
-      laser_(0, scanEffective_ - 1) = msg->ranges[i] * cos(msg->angle_min + msg->angle_increment * i);
-      laser_(1, scanEffective_ - 1) = msg->ranges[i] * sin(msg->angle_min + msg->angle_increment * i);
-      laser_(2, scanEffective_ - 1) = 0;
-      laser_(3, scanEffective_ - 1) = 1;
-      scanEffective_++;
+      try
+      {
+
+        scanEffective_++;
+
+        laser_.conservativeResize(4, scanEffective_);
+        laser_(0, scanEffective_ - 1) = dist_ * cos(msg->angle_min + msg->angle_increment * i);
+        laser_(1, scanEffective_ - 1) = dist_ * sin(msg->angle_min + msg->angle_increment * i);
+        laser_(2, scanEffective_ - 1) = 0;
+        laser_(3, scanEffective_ - 1) = 1;
+      }
+      catch (const std::exception &e)
+      {
+        ROS_ERROR(e.what());
+        // ROS_WARN(e.what());
+      }
     }
   }
 
@@ -60,48 +113,15 @@ void callackLaser(const sensor_msgs::LaserScan::ConstPtr &msg)
   checkData();
 }
 
-void checkData()
-{
-
-  if (vec_poses_.size() == 0 || vec_lasers_.size() == 0)
-  {
-    ROS_WARN("Data is not ready");
-  }
-
-  while (!vec_poses_.empty() && !vec_lasers_.empty())
-  {
-    if (fabs(vec_poses_time_[0] - vec_lasers_time_[0]) > 0.1)
-    {
-      if (vec_poses_time_[0] < vec_lasers_time_[0])
-      {
-        vec_poses_.erase(vec_poses_.begin());
-        vec_poses_time_.erase(vec_poses_time_.begin());
-      }
-      else
-      {
-        vec_lasers_.erase(vec_lasers_.begin());
-        vec_lasers_time_.erase(vec_lasers_time_.begin());
-      }
-    }
-    else
-    {
-      mclsitmulator_.update(vec_poses_[0], vec_lasers_[0]);
-
-      vec_poses_.erase(vec_poses_.begin());
-      vec_poses_time_.erase(vec_poses_time_.begin());
-      vec_lasers_.erase(vec_lasers_.begin());
-      vec_lasers_time_.erase(vec_lasers_time_.begin());
-    }
-  }
-}
-
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "rs_mcl");
 
   ros::NodeHandle nh;
-  nh.subscribe<sensor_msgs::LaserScan>("/scan", 100, callackLaser);
-  nh.subscribe<nav_msgs::Odometry>("/odom", 100, callbackPose);
+  auto subLaser_ = nh.subscribe<sensor_msgs::LaserScan>("/scan", 100, callackLaser);
+  auto subPose_ = nh.subscribe<nav_msgs::Odometry>("/odom", 100, callbackPose);
 
   ros::spin();
+
+  return 0;
 }

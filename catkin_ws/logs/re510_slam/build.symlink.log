@@ -1,0 +1,4 @@
+Symlinking /home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/lib/pkgconfig/re510_slam.pc
+Symlinking /home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/lib/re510_slam/rs_mcl
+Symlinking /home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/share/re510_slam/cmake/re510_slamConfig.cmake
+Symlinking /home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/share/re510_slam/cmake/re510_slamConfig-version.cmake

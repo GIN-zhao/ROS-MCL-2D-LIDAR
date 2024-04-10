@@ -1,0 +1,1 @@
+/home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/.private/re510_slam/lib/pkgconfig/re510_slam.pc

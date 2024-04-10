@@ -9,7 +9,7 @@ mcl::mcl()
     gridMap_ = cv::imread("/home/mywork/ROS-MCL-2D-LIDAR/gridmap.png", cv::IMREAD_GRAYSCALE);
     gridMapCV_ = cv::imread("/home/mywork/ROS-MCL-2D-LIDAR/erodedGridmap.png", cv::IMREAD_GRAYSCALE);
 
-    numParticles_ = 100;
+    numParticles_ = 2500;
 
     minOdomAngle_ = 30;
 
@@ -43,17 +43,15 @@ mcl::mcl()
     showInMap();
 }
 
-mcl::~mcl() {}
-
 void mcl::initializeParticles()
 {
     particles_.clear();
 
-    std::uniform_real_distribution<float> x_pos(mapCenterX_ - gridMapCV_.cols * imageResolution_ / 4 / 0,
-                                                mapCenterX_ + gridMapCV_.cols * imageResolution_ / 4 / 0);
+    std::uniform_real_distribution<float> x_pos(mapCenterX_ - gridMapCV_.cols * imageResolution_ / 4.0,
+                                                mapCenterX_ + gridMapCV_.cols * imageResolution_ / 4.0);
 
-    std::uniform_real_distribution<float> y_pos(mapCenterY_ - gridMapCV_.rows * imageResolution_ / 4 / 0,
-                                                mapCenterY_ + gridMapCV_.rows * imageResolution_ / 4 / 0);
+    std::uniform_real_distribution<float> y_pos(mapCenterY_ - gridMapCV_.rows * imageResolution_ / 4.0,
+                                                mapCenterY_ + gridMapCV_.rows * imageResolution_ / 4.0);
     std::uniform_real_distribution<float> theta_pos(-M_PI, M_PI);
 
     for (int i = 0; i < numParticles_; i++)
@@ -77,7 +75,7 @@ void mcl::showInMap()
 {
     cv::Mat map_;
 
-    cv::cvtColor(gridMapCV_, map_, cv::COLOR_GRAY2BGR);
+    cv::cvtColor(gridMap_, map_, cv::COLOR_GRAY2BGR);
 
     for (int i = 0; i < numParticles_; i++)
     {
@@ -104,7 +102,7 @@ void mcl::showInMap()
 
         cv::circle(map_, cv::Point(xPos_, yPos_), 1, cv::Scalar(0, 0, 255), -1);
 
-        Eigen::Matrix4f transLaser_ = maxProbParicle_.pose_ * tf_laser2robot_ * maxProbParicle_.laser_;
+        Eigen::Matrix4Xf transLaser_ = maxProbParicle_.pose_ * tf_laser2robot_ * maxProbParicle_.laser_;
 
         for (int i = 0; i < transLaser_.cols(); ++i)
         {
@@ -180,8 +178,9 @@ void mcl::prediction(Eigen::Matrix4f diffPose_)
     showInMap();
 }
 
-void mcl::correction(Eigen::Matrix4f laser_)
+void mcl::correction(Eigen::Matrix4Xf laser_)
 {
+    std::cout << "Correction: " << m_sync_cnt_ << std::endl;
     float maxWeight_ = 0.f;
     float WeightSum_ = 0.f;
 
@@ -252,7 +251,7 @@ void mcl::resampling()
     particles_ = particleSampled_;
 }
 
-void mcl::update(Eigen::Matrix4f pose_, Eigen::Matrix4f laser_)
+void mcl::update(Eigen::Matrix4f pose_, Eigen::Matrix4Xf laser_)
 {
     std::cout << "Update:..." << this->m_sync_cnt_ << std::endl;
 
