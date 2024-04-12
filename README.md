@@ -10,9 +10,6 @@
 
 ## Results
 
-### Mapgen
-
-![mapgen](./results/gif/map_gen.gif)
 
 ### MCL
 
