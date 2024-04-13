@@ -1,4 +1,0 @@
-Symlinking /home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/lib/pkgconfig/hw_slam.pc
-Symlinking /home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/lib/hw_slam/mcl_ros
-Symlinking /home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/share/hw_slam/cmake/hw_slamConfig-version.cmake
-Symlinking /home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/share/hw_slam/cmake/hw_slamConfig.cmake

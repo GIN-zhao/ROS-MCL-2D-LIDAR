@@ -1,1 +1,0 @@
-/home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/.private/catkin_tools_prebuild/setup.zsh
