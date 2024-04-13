@@ -32,7 +32,7 @@ wstool init src $ROSINSTALLFILE
 # Create simbolic link of the packages in src
 echo "Creating simbolic link of the packages..."
 cd src
-ln -s ../../re510_slam
+ln -s ../../hw_slam
 
 cd ..
 

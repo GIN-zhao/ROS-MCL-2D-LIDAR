@@ -1,0 +1,8 @@
+prefix=/home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/install
+
+Name: hw_slam
+Description: Description of hw_slam
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

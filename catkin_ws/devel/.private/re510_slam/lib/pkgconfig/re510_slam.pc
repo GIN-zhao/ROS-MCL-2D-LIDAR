@@ -1,8 +1,0 @@
-prefix=/home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/.private/re510_slam
-
-Name: re510_slam
-Description: Description of re510_slam
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

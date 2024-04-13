@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/.private/hw_slam/setup.sh

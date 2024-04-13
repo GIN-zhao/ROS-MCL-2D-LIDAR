@@ -21,39 +21,29 @@
 
 0. Setting
     1. Download this repository 
-    <pre><code>$ cd /home/$usr_name/catkin_ws/src</code></pre>
-    <pre><code>$ git clone https://github.com/GIN-zhao/ROS-MCL-2D-LIDAR.git</code></pre>
+    <pre><code>git clone https://github.com/GIN-zhao/ROS-MCL-2D-LIDAR.git</code></pre>
     2. Build this ros code as follows.
-    <pre><code>$ cd /home/$usr_name/catkin_ws</code></pre>
-    <pre><code>$ catkin_make re510_slam</code></pre>
+    <pre><code>cd $project/script </code></pre>
 
-    Or if you use catkin-tools, then type below line on the command
-    <pre><code>$ catkin build re510_slam</code></pre>
+    <pre><code>bash quick-build.sh </code></pre>
 
 
+1.  MCL
 
- MCL
-
-    1. Move to the repository e.g,
+    1. Move to the repository e.g
   
-    <pre><code>$ cd /home/$usr_name/catkin_ws/src/mcl_2d_lidar_ros</code></pre>
+    <pre><code>cd $project </code></pre>
+    <pre><code>source $project/catkin_ws/devel/setup.bash </code></pre>
 
-    2. Play rosbag **re510_mcl.bag**
+    2. Play rosbag **hw2_data.bag**
 
-    <pre><code>$ rosbag play rosbag/re510_mcl.bag</code></pre>
+    <pre><code>$ rosbag play rosbag/hw2_data.bag</code></pre>
 
-    3. Change the paths of png: 7 and 8th lines on the re510_slam/rs_mcl/src/mcl.cpp
+    3. Change the paths of png: 7 and 8th lines on the hw_slam/mcl_/src/mcl.cpp
     
     4. Run MCL code
 
-    <pre><code>$ rosrun re510_slam rs_mcl</code></pre>
+    <pre><code>$ rosrun hw_slam mcl_ros</code></pre>
 
 
-## Consideration
-
-**/vrpn_client_node/turtleBot/pose**: Pose captured from OptiTrack, which is a motion caputre system(Ground Truth).
-
-**/odom**: 2D pose from Turtlebot2.
-
-**/scan**: 2D LiDAR data measured by RP LiDAR A1M8.
 

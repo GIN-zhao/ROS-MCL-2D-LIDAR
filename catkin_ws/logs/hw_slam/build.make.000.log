@@ -1,0 +1,49 @@
+[35m[1mScanning dependencies of target mcl_ros[0m
+[ 50%] [32mBuilding CXX object CMakeFiles/mcl_ros.dir/tool/tool.cpp.o[0m
+[ 50%] [32mBuilding CXX object CMakeFiles/mcl_ros.dir/mcl_/mcl_ros.cpp.o[0m
+[ 75%] [32mBuilding CXX object CMakeFiles/mcl_ros.dir/mcl_/src/mcl.cpp.o[0m
+In file included from [01m[K/opt/ros/noetic/include/ros/ros.h:40[m[K,
+                 from [01m[K/home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/src/hw_slam/mcl_/mcl_ros.cpp:2[m[K:
+[01m[K/home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/src/hw_slam/mcl_/mcl_ros.cpp:[m[K In function ‘[01m[Kvoid checkData()[m[K’:
+[01m[K/opt/ros/noetic/include/ros/console.h:351:176:[m[K [01;35m[Kwarning: [m[Kformat not a string literal and no format arguments [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat-security-Wformat-security]8;;[m[K]
+  351 |     ::ros::console::print(filter, __rosconsole_define_location__loc.logger_, __rosconsole_define_location__loc.level_, __FILE__, __LINE__, __ROSCONSOLE_FUNCTION__, __VA_ARGS__[01;35m[K)[m[K
+      |                                                                                                                                                                                [01;35m[K^[m[K
+[01m[K/opt/ros/noetic/include/ros/console.h:354:5:[m[K [01;36m[Knote: [m[Kin expansion of macro ‘[01m[KROSCONSOLE_PRINT_AT_LOCATION_WITH_FILTER[m[K’
+  354 |     [01;36m[KROSCONSOLE_PRINT_AT_LOCATION_WITH_FILTER[m[K(NULL, __VA_ARGS__)
+      |     [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/opt/ros/noetic/include/ros/console.h:390:7:[m[K [01;36m[Knote: [m[Kin expansion of macro ‘[01m[KROSCONSOLE_PRINT_AT_LOCATION[m[K’
+  390 |       [01;36m[KROSCONSOLE_PRINT_AT_LOCATION[m[K(__VA_ARGS__); \
+      |       [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/opt/ros/noetic/include/ros/console.h:575:35:[m[K [01;36m[Knote: [m[Kin expansion of macro ‘[01m[KROS_LOG_COND[m[K’
+  575 | #define ROS_LOG(level, name, ...) [01;36m[KROS_LOG_COND[m[K(true, level, name, __VA_ARGS__)
+      |                                   [01;36m[K^~~~~~~~~~~~[m[K
+[01m[K/opt/ros/noetic/include/rosconsole/macros_generated.h:214:24:[m[K [01;36m[Knote: [m[Kin expansion of macro ‘[01m[KROS_LOG[m[K’
+  214 | #define ROS_ERROR(...) [01;36m[KROS_LOG[m[K(::ros::console::levels::Error, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
+      |                        [01;36m[K^~~~~~~[m[K
+[01m[K/home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/src/hw_slam/mcl_/mcl_ros.cpp:51:9:[m[K [01;36m[Knote: [m[Kin expansion of macro ‘[01m[KROS_ERROR[m[K’
+   51 |         [01;36m[KROS_ERROR[m[K(e.what());
+      |         [01;36m[K^~~~~~~~~[m[K
+[01m[K/home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/src/hw_slam/mcl_/mcl_ros.cpp:[m[K In function ‘[01m[Kvoid callackLaser(const ConstPtr&)[m[K’:
+[01m[K/opt/ros/noetic/include/ros/console.h:351:176:[m[K [01;35m[Kwarning: [m[Kformat not a string literal and no format arguments [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat-security-Wformat-security]8;;[m[K]
+  351 |     ::ros::console::print(filter, __rosconsole_define_location__loc.logger_, __rosconsole_define_location__loc.level_, __FILE__, __LINE__, __ROSCONSOLE_FUNCTION__, __VA_ARGS__[01;35m[K)[m[K
+      |                                                                                                                                                                                [01;35m[K^[m[K
+[01m[K/opt/ros/noetic/include/ros/console.h:354:5:[m[K [01;36m[Knote: [m[Kin expansion of macro ‘[01m[KROSCONSOLE_PRINT_AT_LOCATION_WITH_FILTER[m[K’
+  354 |     [01;36m[KROSCONSOLE_PRINT_AT_LOCATION_WITH_FILTER[m[K(NULL, __VA_ARGS__)
+      |     [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/opt/ros/noetic/include/ros/console.h:390:7:[m[K [01;36m[Knote: [m[Kin expansion of macro ‘[01m[KROSCONSOLE_PRINT_AT_LOCATION[m[K’
+  390 |       [01;36m[KROSCONSOLE_PRINT_AT_LOCATION[m[K(__VA_ARGS__); \
+      |       [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/opt/ros/noetic/include/ros/console.h:575:35:[m[K [01;36m[Knote: [m[Kin expansion of macro ‘[01m[KROS_LOG_COND[m[K’
+  575 | #define ROS_LOG(level, name, ...) [01;36m[KROS_LOG_COND[m[K(true, level, name, __VA_ARGS__)
+      |                                   [01;36m[K^~~~~~~~~~~~[m[K
+[01m[K/opt/ros/noetic/include/rosconsole/macros_generated.h:214:24:[m[K [01;36m[Knote: [m[Kin expansion of macro ‘[01m[KROS_LOG[m[K’
+  214 | #define ROS_ERROR(...) [01;36m[KROS_LOG[m[K(::ros::console::levels::Error, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
+      |                        [01;36m[K^~~~~~~[m[K
+[01m[K/home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/src/hw_slam/mcl_/mcl_ros.cpp:102:9:[m[K [01;36m[Knote: [m[Kin expansion of macro ‘[01m[KROS_ERROR[m[K’
+  102 |         [01;36m[KROS_ERROR[m[K(e.what());
+      |         [01;36m[K^~~~~~~~~[m[K
+[100%] [32m[1mLinking CXX executable /home/mywork/ROS-MCL-2D-LIDAR/catkin_ws/devel/.private/hw_slam/lib/hw_slam/mcl_ros[0m
+/usr/bin/ld: warning: libopencv_features2d.so.4.2, needed by /usr/lib/x86_64-linux-gnu/libopencv_calib3d.so.4.2.0, may conflict with libopencv_features2d.so.4.5
+/usr/bin/ld: warning: libopencv_imgproc.so.4.5, needed by /usr/local/lib/libopencv_features2d.so.4.5.0, may conflict with libopencv_imgproc.so.4.2
+/usr/bin/ld: warning: libopencv_core.so.4.5, needed by /usr/local/lib/libopencv_features2d.so.4.5.0, may conflict with libopencv_core.so.4.2
+[100%] Built target mcl_ros
