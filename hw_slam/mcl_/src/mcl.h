@@ -12,7 +12,7 @@
 #include <opencv2/opencv.hpp>
 #include <tf/tf.h>
 #include <random>
-#include "tool/tool.h"
+#include "tool.h"
 #include <cmath>
 
 class mcl
